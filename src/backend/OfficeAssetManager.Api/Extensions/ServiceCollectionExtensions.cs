@@ -7,7 +7,7 @@ using Microsoft.OpenApi.Models;
 using OfficeAssetManager.Core;
 using OfficeAssetManager.Core.Domain.Entities;
 using OfficeAssetManager.Infrastructure;
-using OfficeAssetManager.Infrastructure.Data;
+using OfficeAssetManager.Infrastructure.DbContext;
 using System.Text;
 
 namespace OfficeAssetManager.Api.Extensions
@@ -19,7 +19,6 @@ namespace OfficeAssetManager.Api.Extensions
             services.AddInfrastructure(configuration);
             services.AddCore();
 
-            // 2. Identity Configuration
             services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
