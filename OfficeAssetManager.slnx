@@ -1,6 +1,10 @@
 <Solution>
-  <Project Path="src/backend/OfficeAssetManager.Api/OfficeAssetManager.Api.csproj" />
-  <Project Path="src/backend/OfficeAssetManager.Core/OfficeAssetManager.Core.csproj" />
-  <Project Path="src/backend/OfficeAssetManager.Infrastructure/OfficeAssetManager.Infrastructure.csproj" />
-  <Project Path="tests/OfficeAssetManager.Tests/OfficeAssetManager.Tests.csproj" Id="d5dadd2f-4d0d-45fb-8a14-60423e8efd30" />
+  <Folder Name="/src/">
+    <Project Path="src/backend/OfficeAssetManager.Api/OfficeAssetManager.Api.csproj" />
+    <Project Path="src/backend/OfficeAssetManager.Core/OfficeAssetManager.Core.csproj" />
+    <Project Path="src/backend/OfficeAssetManager.Infrastructure/OfficeAssetManager.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OfficeAssetManager.Tests/OfficeAssetManager.Tests.csproj" />
+  </Folder>
 </Solution>

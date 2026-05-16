@@ -61,17 +61,20 @@ namespace OfficeAssetManager.Core.Services
 
         public async Task<AuthResponseDto> Register(RegisterDto model)
         {
+            bool anyUserExists = _userManager.Users.Count() > 0;
+
             ApplicationUser user = new()
             {
                 UserName = model.UserName,
-                Email = model.Email,
+                Email = model.Email
             };
 
             IdentityResult res = await _userManager.CreateAsync(user, model.Password);
 
             if (res.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, "User");
+
+                await _userManager.AddToRoleAsync(user, anyUserExists ? "User" : "Admin");
 
                 string token = await _jwtService.GetJwtToken(user);
                 string refreshToken = _jwtService.GenerateRefreshToken();

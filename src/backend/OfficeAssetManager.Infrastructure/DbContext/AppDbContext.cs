@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OfficeAssetManager.Core.Domain.Entities;
 
-namespace OfficeAssetManager.Infrastructure.Data
+namespace OfficeAssetManager.Infrastructure.DbContext
 {
 
     public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int>

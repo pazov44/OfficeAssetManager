@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OfficeAssetManager.Core.Domain.Entities;
-using OfficeAssetManager.Infrastructure.Data;
+using OfficeAssetManager.Core.Domain.RepositoryContracts;
+using OfficeAssetManager.Infrastructure.DbContext;
+using OfficeAssetManager.Infrastructure.Repositories;
 
 namespace OfficeAssetManager.Infrastructure
 {
@@ -21,6 +21,8 @@ namespace OfficeAssetManager.Infrastructure
 
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
+
+            services.AddScoped<IAssetRepository,AssetRepository>();
 
             return services;
         }

@@ -17,6 +17,8 @@ namespace OfficeAssetManager.Core
 
             services.AddScoped<IAuthService,AuthService>();
 
+            services.AddScoped<IAssetService,AssetService>();
+
             return services;
         }
     }
