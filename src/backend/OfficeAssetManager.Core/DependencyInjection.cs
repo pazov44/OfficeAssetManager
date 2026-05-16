@@ -19,6 +19,10 @@ namespace OfficeAssetManager.Core
 
             services.AddScoped<IAssetService,AssetService>();
 
+            services.AddScoped<IAssetLogService,AssetLogService>();
+
+            services.AddScoped<IReservationService,ReservationService>();
+
             return services;
         }
     }

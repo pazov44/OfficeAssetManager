@@ -24,6 +24,10 @@ namespace OfficeAssetManager.Infrastructure
 
             services.AddScoped<IAssetRepository,AssetRepository>();
 
+            services.AddScoped<IAssetLogRepository,AssetLogRepository>();
+
+            services.AddScoped<IReservationRepository,ReservationRepository>();
+
             return services;
         }
     }
