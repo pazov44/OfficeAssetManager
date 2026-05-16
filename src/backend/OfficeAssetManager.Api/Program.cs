@@ -21,7 +21,7 @@ namespace OfficeAssetManager.Api
 
             await ApplicationInitializer.Initialize(app.Services);
 
-            app.UseApiMiddleware();
+            app.UseApiMiddleware(app.Configuration);
 
             app.Run();
         }

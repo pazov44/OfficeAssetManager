@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
+using OfficeAssetManager.Core.Configuration;
 using OfficeAssetManager.Core.Domain.Entities;
 using OfficeAssetManager.Core.DTO;
 using OfficeAssetManager.Core.ServiceContracts;
@@ -18,13 +19,13 @@ namespace OfficeAssetManager.Core.Services
 
         private readonly IJwtService _jwtService;
 
-        private readonly IConfiguration _configuration;
+        private readonly JwtOptions _jwtOptions;
 
-        public AuthService(UserManager<ApplicationUser> userManager, IJwtService jwtService, IConfiguration configuration)
+        public AuthService(UserManager<ApplicationUser> userManager, IJwtService jwtService, JwtOptions jwtOptions)
         {
             _userManager = userManager;
             _jwtService = jwtService;
-            _configuration = configuration;
+            _jwtOptions = jwtOptions;
         }
 
         public async Task<bool> EmailExists(string email)
@@ -46,7 +47,7 @@ namespace OfficeAssetManager.Core.Services
             string refreshToken = _jwtService.GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["RefreshToken:expiration_days"]));
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(Convert.ToDouble(_jwtOptions.RefreshTokenExpirationDays));
             await _userManager.UpdateAsync(user);
 
             return new AuthResponseDto()
@@ -80,7 +81,7 @@ namespace OfficeAssetManager.Core.Services
                 string refreshToken = _jwtService.GenerateRefreshToken();
 
                 user.RefreshToken = refreshToken;
-                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["RefreshToken:expiration_days"]));
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(Convert.ToDouble(_jwtOptions.RefreshTokenExpirationDays));
                 await _userManager.UpdateAsync(user);
 
                 return new AuthResponseDto

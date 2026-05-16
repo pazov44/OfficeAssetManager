@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using OfficeAssetManager.Core.Configuration;
 using OfficeAssetManager.Core.Domain.Entities;
 using OfficeAssetManager.Core.ServiceContracts;
 using System;
@@ -15,13 +16,13 @@ namespace OfficeAssetManager.Core.Services
 {
     public class JwtService : IJwtService
     {
-        private readonly IConfiguration _configuration;
+        private readonly JwtOptions _jwtOptions;
 
         private readonly UserManager<ApplicationUser> _userManager;
-        public JwtService(IConfiguration configuration, UserManager<ApplicationUser> userManager)
+        public JwtService(JwtOptions jwtOptions, UserManager<ApplicationUser> userManager)
         {
-            _configuration = configuration;
             _userManager = userManager;
+            _jwtOptions = jwtOptions;
         }
         public async Task<string> GetJwtToken(ApplicationUser user)
         {
@@ -43,16 +44,16 @@ namespace OfficeAssetManager.Core.Services
 
             //Create security data for jwt, hashing + key
             SymmetricSecurityKey securityKey = new(
-                Convert.FromBase64String(_configuration["Jwt:Key"]!));
+                Convert.FromBase64String(_jwtOptions.SecretKey));
 
             SigningCredentials credentials = new(securityKey, SecurityAlgorithms.HmacSha256);
 
             //token expiration
             DateTime expiration = DateTime.UtcNow.AddMinutes(
-                Convert.ToDouble(_configuration["Jwt:expiration_minutes"]));
+                Convert.ToDouble(_jwtOptions.TokenExpirationMinutes));
 
-            JwtSecurityToken jwtGen = new(issuer: _configuration["jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+            JwtSecurityToken jwtGen = new(issuer: _jwtOptions.Issuer,
+                audience: _jwtOptions.Audience,
                 claims: claims,
                 signingCredentials: credentials,
                 expires: expiration
@@ -81,7 +82,7 @@ namespace OfficeAssetManager.Core.Services
                 ValidateAudience = false,
                 ValidateIssuer = false,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(_configuration["Jwt:Key"]!)),
+                IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(_jwtOptions.SecretKey)),
                 ValidateLifetime = false
             };
 

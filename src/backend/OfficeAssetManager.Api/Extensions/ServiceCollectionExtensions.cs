@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OfficeAssetManager.Core;
+using OfficeAssetManager.Core.Configuration;
 using OfficeAssetManager.Core.Domain.Entities;
 using OfficeAssetManager.Infrastructure;
 using OfficeAssetManager.Infrastructure.DbContext;
@@ -14,15 +15,59 @@ namespace OfficeAssetManager.Api.Extensions
 {
     public static class ServiceCollectionExtensions
     {
+
         public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddInfrastructure(configuration);
             services.AddCore();
 
+            services.AddApiCors(configuration);
+            services.AddApiIdentityAndAuth(configuration);
+            services.AddApiSwagger();
+
+            return services;
+        }
+
+        private static IServiceCollection AddApiCors(this IServiceCollection services, IConfiguration configuration)
+        {
+            var corsOptions = new CorsOptions();
+            configuration.GetSection("CorsSettings").Bind(corsOptions);
+            services.AddSingleton(corsOptions);
+
+            services.AddCors(options =>
+            {
+                string policyName = corsOptions.PolicyName
+                    ?? throw new InvalidOperationException("CORS Policy Name is missing!");
+
+                var allowedOrigins = corsOptions.AllowedOrigins ?? Array.Empty<string>();
+
+                options.AddPolicy(name: policyName,
+                    policy =>
+                    {
+                        policy.WithOrigins(allowedOrigins)
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+            });
+
+            return services;
+        }
+        private static IServiceCollection AddApiIdentityAndAuth(this IServiceCollection services, IConfiguration configuration)
+        {
+            string jwtSecretKey = configuration["Jwt:Key"]
+                ?? throw new InvalidOperationException("JWT Secret Key is missing!");
+
+            var jwtOptions = new JwtOptions();
+            configuration.GetSection("Jwt").Bind(jwtOptions);
+            jwtOptions.SecretKey = jwtSecretKey;
+            services.AddSingleton(jwtOptions);
+
+            // ASP.NET Core Identity
             services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
 
+            // JWT Authentication
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -36,15 +81,15 @@ namespace OfficeAssetManager.Api.Extensions
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = configuration["Jwt:Issuer"],
-                    ValidAudience = configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Convert.FromBase64String(configuration["Jwt:Key"]!))
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidAudience = jwtOptions.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtOptions.SecretKey))
                 };
             });
 
             services.AddAuthorization();
 
+            // Global Authorization Filter for Controllers
             services.AddControllers(options =>
             {
                 var policy = new AuthorizationPolicyBuilder()
@@ -54,6 +99,10 @@ namespace OfficeAssetManager.Api.Extensions
                 options.Filters.Add(new AuthorizeFilter(policy));
             });
 
+            return services;
+        }
+        private static IServiceCollection AddApiSwagger(this IServiceCollection services)
+        {
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options =>
             {
@@ -83,5 +132,6 @@ namespace OfficeAssetManager.Api.Extensions
 
             return services;
         }
+
     }
 }
