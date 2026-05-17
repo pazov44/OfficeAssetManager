@@ -8,7 +8,7 @@ namespace OfficeAssetManager.Core.Domain.Entities
 {
     public class AssetLog : BaseEntity
     {
-        public int AssetId { get; set; }
+        public int? AssetId { get; set; }
         public Asset? Asset { get; set; }
 
         public string Action { get; set; } = string.Empty;

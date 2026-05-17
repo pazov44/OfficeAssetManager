@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OfficeAssetManager.Core.Domain.Entities;
+using System.Reflection.Emit;
 
 namespace OfficeAssetManager.Infrastructure.DbContext
 {
@@ -40,11 +41,15 @@ namespace OfficeAssetManager.Infrastructure.DbContext
 
             builder.Entity<AssetLog>(entity =>
             {
+                // Configure the relationship with Asset
                 entity.HasOne(al => al.Asset)
                     .WithMany()
-                    .HasForeignKey(al => al.AssetId);
+                    .HasForeignKey(al => al.AssetId)
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                entity.Property(al => al.Action).IsRequired().HasMaxLength(100);
+                entity.Property(al => al.Action)
+                    .IsRequired()
+                    .HasMaxLength(100);
             });
         }
     }
