@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using OfficeAssetManager.Core.Configuration;
 using OfficeAssetManager.Core.Domain.Entities;
 using OfficeAssetManager.Core.Services;
+using System.Collections.Generic;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace OfficeAssetManager.Tests
@@ -18,21 +21,21 @@ namespace OfficeAssetManager.Tests
 
         public JwtServiceTests()
         {
-            var myConfiguration = new ConfigurationBuilder()
-        .AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            {"Jwt:Key", TestKey},
-            {"Jwt:Issuer", "TestIssuer"},
-            {"Jwt:Audience", "TestAudience"},
-            {"Jwt:expiration_minutes", "30"}
-        })
-        .Build();
+            var jwtOptions = new JwtOptions
+            {
+                SecretKey = TestKey,
+                Issuer = "TestIssuer",
+                Audience = "TestAudience",
+                TokenExpirationMinutes = 30,
+                RefreshTokenExpirationDays = 7
+            };
 
             var store = new Mock<IUserStore<ApplicationUser>>();
             _userManagerMock = new Mock<UserManager<ApplicationUser>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
 
-            _jwtService = new JwtService(myConfiguration, _userManagerMock.Object);
+            _jwtService = new JwtService(jwtOptions, _userManagerMock.Object);
         }
+
         [Fact]
         public async Task GetJwtToken_ShouldReturnValidToken_WhenUserIsValid()
         {

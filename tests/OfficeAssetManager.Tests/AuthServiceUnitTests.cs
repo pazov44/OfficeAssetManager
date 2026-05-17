@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using OfficeAssetManager.Core.Configuration;
 using OfficeAssetManager.Core.Domain.Entities;
 using OfficeAssetManager.Core.DTO;
 using OfficeAssetManager.Core.ServiceContracts;
@@ -14,7 +15,7 @@ namespace OfficeAssetManager.Tests
     {
         private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
         private readonly Mock<IJwtService> _jwtServiceMock;
-        private readonly Mock<IConfiguration> _configMock;
+        private readonly Mock<JwtOptions> _configMock;
         private readonly AuthService _authService;
 
         public AuthServiceTests()
@@ -24,10 +25,10 @@ namespace OfficeAssetManager.Tests
             _userManagerMock = new Mock<UserManager<ApplicationUser>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
 
             _jwtServiceMock = new Mock<IJwtService>();
-            _configMock = new Mock<IConfiguration>();
+            _configMock = new Mock<JwtOptions>();
 
             // Setup Refresh Token Configuration
-            _configMock.Setup(c => c["RefreshToken:expiration_days"]).Returns("7");
+            _configMock.Setup(c => c.RefreshTokenExpirationDays).Returns(7);
 
             _authService = new AuthService(_userManagerMock.Object, _jwtServiceMock.Object, _configMock.Object);
         }
