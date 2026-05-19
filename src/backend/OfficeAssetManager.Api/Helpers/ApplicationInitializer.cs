@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using OfficeAssetManager.Core.Domain.Entities;
+using OfficeAssetManager.Infrastructure.DbContext;
 
 namespace OfficeAssetManager.Api.Helpers
 {
@@ -14,6 +16,8 @@ namespace OfficeAssetManager.Api.Helpers
         /// <param name="services">The root service provider from the WebApplication.</param>
         public static async Task Initialize(IServiceProvider services)
         {
+            await ApplyDatabaseMigrations(services);
+
             await InitializeIdentityRoles(services);
         }
 
@@ -40,6 +44,28 @@ namespace OfficeAssetManager.Api.Helpers
                             Name = roleName
                         });
                     }
+                }
+            }
+        }
+
+        private static async Task ApplyDatabaseMigrations(IServiceProvider services)
+        {
+            using (var scope = services.CreateScope())
+            {
+                var serviceProvider = scope.ServiceProvider;
+                try
+                {
+                    var context = serviceProvider.GetRequiredService<AppDbContext>();
+                    Console.WriteLine("Checking for pending database migrations...");
+
+                    await context.Database.MigrateAsync();
+
+                    Console.WriteLine("Database migrations applied successfully.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred during database migration: {ex.Message}");
+                    throw; // Rethrow so the app stops if the DB setup fails
                 }
             }
         }
