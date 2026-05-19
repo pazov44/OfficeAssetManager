@@ -12,13 +12,12 @@
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseHttpsRedirection();
             }
             else
             {
                 app.UseHsts();
             }
-
-            app.UseHttpsRedirection();
 
             app.UseRouting();
 

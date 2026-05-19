@@ -3,19 +3,19 @@ import apiClient from './api'; // Import interceptor client
 export const reservationService = {
   // POST /api/Reservation
   createReservation: async (payload) => {
-    const response = await apiClient.post('/Reservation', payload);
+    const response = await apiClient.post('/reservation', payload);
     return response.data;
   },
 
   // GET /api/Reservation
   getAllReservations: async () => {
-    const response = await apiClient.get('/Reservation');
+    const response = await apiClient.get('/reservation');
     return response.data;
   },
 
   // GET /api/Reservation/my-reservations
   getMyReservations: async () => {
-    const response = await apiClient.get('/Reservation/my-reservations');
+    const response = await apiClient.get('/reservation/my-reservations');
     return response.data;
   },
 
@@ -31,7 +31,7 @@ export const reservationService = {
 
   // DELETE /api/Reservation/{id}/cancel
   cancelReservation: async (id) => {
-    const response = await apiClient.delete(`/Reservation/${id}/cancel`);
+    const response = await apiClient.delete(`/reservation/${id}/cancel`);
     return response.data;
   }
 };

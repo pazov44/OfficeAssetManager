@@ -30,6 +30,11 @@ namespace OfficeAssetManager.Api.Extensions
 
         private static IServiceCollection AddApiCors(this IServiceCollection services, IConfiguration configuration)
         {
+            services.Configure<RouteOptions>(options =>
+            {
+                options.LowercaseUrls = true;
+            });
+
             var corsOptions = new CorsOptions();
             configuration.GetSection("CorsSettings").Bind(corsOptions);
             services.AddSingleton(corsOptions);

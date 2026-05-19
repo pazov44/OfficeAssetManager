@@ -3,13 +3,13 @@ import apiClient from './api';
 export const authService = {
   // Matches POST /api/Auth/register
   register: async (email, password, userName) => {
-    const response = await apiClient.post('/Auth/register', { email, password, userName });
+    const response = await apiClient.post('/auth/register', { email, password, userName });
     return response.data;
   },
 
   // Matches POST /api/Auth/login
   login: async (userName, password) => {
-    const response = await apiClient.post('/Auth/login', { userName, password });
+    const response = await apiClient.post('/auth/login', { userName, password });
     
     // Assuming .NET Core backend returns an object with a token string
     if (response.data && response.data.token) {
