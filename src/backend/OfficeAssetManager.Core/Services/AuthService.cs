@@ -40,7 +40,7 @@ namespace OfficeAssetManager.Core.Services
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                return new AuthResponseDto { Success = false, Message = "Invalid username or password" };
+                return new AuthResponseFailDto { Message = "Invalid username or password" };
             }
 
             string token = await _jwtService.GetJwtToken(user);
@@ -50,9 +50,8 @@ namespace OfficeAssetManager.Core.Services
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(Convert.ToDouble(_jwtOptions.RefreshTokenExpirationDays));
             await _userManager.UpdateAsync(user);
 
-            return new AuthResponseDto()
-            {
-                Success = true,
+            return new AuthResponseSuccessDto()
+            {            
                 Token = token,
                 RefreshToken = refreshToken,
                 Email = user.Email!,
@@ -74,8 +73,14 @@ namespace OfficeAssetManager.Core.Services
 
             if (res.Succeeded)
             {
-
-                await _userManager.AddToRoleAsync(user, anyUserExists ? "User" : "Admin");
+                if (anyUserExists == false)
+                {
+                    await _userManager.AddToRoleAsync(user, "Admin");
+                }
+                else
+                {
+                    await _userManager.AddToRoleAsync(user, "User");
+                }
 
                 string token = await _jwtService.GetJwtToken(user);
                 string refreshToken = _jwtService.GenerateRefreshToken();
@@ -84,9 +89,8 @@ namespace OfficeAssetManager.Core.Services
                 user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(Convert.ToDouble(_jwtOptions.RefreshTokenExpirationDays));
                 await _userManager.UpdateAsync(user);
 
-                return new AuthResponseDto
-                {
-                    Success = true,
+                return new AuthResponseSuccessDto
+                {                
                     Token = token,
                     RefreshToken = refreshToken,
                     Email = user.Email,
@@ -94,10 +98,10 @@ namespace OfficeAssetManager.Core.Services
                 };
             }
 
-            return new AuthResponseDto
-            {
-                Success = false,
-                Message = string.Join(" ", res.Errors.Select(e => e.Description))
+            return new AuthResponseFailDto
+            {               
+                Message = "Registration failed with validation errors.",
+                Errors = res.Errors.Select(e => e.Description)
             };
         }
 
@@ -108,7 +112,7 @@ namespace OfficeAssetManager.Core.Services
 
             if (string.IsNullOrEmpty(username))
             {
-                return new AuthResponseDto { Success = false, Message = "Invalid token claims" };
+                return new AuthResponseFailDto {   Message = "Invalid token claims" };
             }
 
             var user = await _userManager.FindByNameAsync(username);
@@ -117,9 +121,8 @@ namespace OfficeAssetManager.Core.Services
                 user.RefreshToken != model.RefreshToken ||
                 user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
-                return new AuthResponseDto
-                {
-                    Success = false,
+                return new AuthResponseFailDto
+                {                
                     Message = "Invalid or expired refresh token. Please login again."
                 };
             }
@@ -130,9 +133,8 @@ namespace OfficeAssetManager.Core.Services
             user.RefreshToken = newRefreshToken;
             await _userManager.UpdateAsync(user);
 
-            return new AuthResponseDto
-            {
-                Success = true,
+            return new AuthResponseSuccessDto
+            {                
                 Token = newJwtToken,
                 RefreshToken = newRefreshToken,
                 Email = user.Email!,

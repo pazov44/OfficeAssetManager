@@ -15,7 +15,7 @@ namespace OfficeAssetManager.Tests
     {
         private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
         private readonly Mock<IJwtService> _jwtServiceMock;
-        private readonly Mock<JwtOptions> _configMock;
+        private readonly JwtOptions _jwtOptionsInstance;
         private readonly AuthService _authService;
 
         public AuthServiceTests()
@@ -25,12 +25,14 @@ namespace OfficeAssetManager.Tests
             _userManagerMock = new Mock<UserManager<ApplicationUser>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
 
             _jwtServiceMock = new Mock<IJwtService>();
-            _configMock = new Mock<JwtOptions>();
 
-            // Setup Refresh Token Configuration
-            _configMock.Setup(c => c.RefreshTokenExpirationDays).Returns(7);
+            // Using a real POCO instance instead of a mock to bypass non-overridable exceptions
+            _jwtOptionsInstance = new JwtOptions
+            {
+                RefreshTokenExpirationDays = 7
+            };
 
-            _authService = new AuthService(_userManagerMock.Object, _jwtServiceMock.Object, _configMock.Object);
+            _authService = new AuthService(_userManagerMock.Object, _jwtServiceMock.Object, _jwtOptionsInstance);
         }
 
         [Fact]
@@ -54,9 +56,12 @@ namespace OfficeAssetManager.Tests
             var result = await _authService.Login(loginDto);
 
             // Assert
-            Assert.True(result.Success);
-            Assert.Equal("fake-jwt-token", result.Token);
-            Assert.Equal("fake-refresh-token", result.RefreshToken);
+
+            // Explicitly cast to verify polymorphic response
+            var successResult = Assert.IsType<AuthResponseSuccessDto>(result);
+            Assert.Equal("fake-jwt-token", successResult.Token);
+            Assert.Equal("fake-refresh-token", successResult.RefreshToken);
+
             _userManagerMock.Verify(m => m.UpdateAsync(It.Is<ApplicationUser>(u => u.RefreshToken == "fake-refresh-token")), Times.Once);
         }
 
@@ -76,7 +81,6 @@ namespace OfficeAssetManager.Tests
             var result = await _authService.Login(loginDto);
 
             // Assert
-            Assert.False(result.Success);
             Assert.Equal("Invalid username or password", result.Message);
         }
 
@@ -108,8 +112,12 @@ namespace OfficeAssetManager.Tests
             var result = await _authService.RefreshToken(tokenRequest);
 
             // Assert
-            Assert.True(result.Success);
-            Assert.Equal("new-jwt-token", result.Token);
+
+            // Explicitly cast to verify polymorphic response
+            var successResult = Assert.IsType<AuthResponseSuccessDto>(result);
+            Assert.Equal("new-jwt-token", successResult.Token);
+            Assert.Equal("new-refresh-token", successResult.RefreshToken); // FIXED: Changed from "fake-refresh-token" to "new-refresh-token"
+
             _userManagerMock.Verify(m => m.UpdateAsync(user), Times.Once);
         }
     }

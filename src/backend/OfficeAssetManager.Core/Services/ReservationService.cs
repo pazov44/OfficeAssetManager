@@ -1,7 +1,8 @@
-﻿using OfficeAssetManager.Core.Domain.Entities;
+﻿using Microsoft.AspNetCore.Identity;
+using OfficeAssetManager.Core.Domain.Entities;
 using OfficeAssetManager.Core.Domain.Enums;
-using OfficeAssetManager.Core.DTO;
 using OfficeAssetManager.Core.Domain.RepositoryContracts;
+using OfficeAssetManager.Core.DTO;
 using OfficeAssetManager.Core.ServiceContracts;
 
 namespace OfficeAssetManager.Core.Services;
@@ -10,11 +11,13 @@ public class ReservationService : IReservationService
 {
     private readonly IReservationRepository _reservationRepo;
     private readonly IAssetRepository _assetRepo;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public ReservationService(IReservationRepository reservationRepo, IAssetRepository assetRepo)
+    public ReservationService(IReservationRepository reservationRepo, IAssetRepository assetRepo, UserManager<ApplicationUser> userManager)
     {
         _reservationRepo = reservationRepo;
         _assetRepo = assetRepo;
+        _userManager = userManager;
     }
 
     public async Task<ReservationResponseDto> CreateReservationAsync(int userId, ReservationRequestDto dto)
@@ -22,6 +25,9 @@ public class ReservationService : IReservationService
         // Check if Asset exists
         var asset = await _assetRepo.GetByIdAsync(dto.AssetId);
         if (asset == null) throw new Exception("Asset not found.");
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null) throw new Exception("User not found.");
 
         // Check for overlapping dates
         if (await _reservationRepo.HasOverlappingReservationAsync(dto.AssetId, dto.StartDate, dto.EndDate))
@@ -34,14 +40,14 @@ public class ReservationService : IReservationService
             AssetId = dto.AssetId,
             StartDate = dto.StartDate,
             EndDate = dto.EndDate,
-            Status = ReservationStatus.Pending
+            Status = ReservationStatus.Pending,
         };
 
         await _reservationRepo.AddAsync(reservation);
         await _reservationRepo.SaveChangesAsync();
 
         // Load the asset details for the response
-        return MapToDto(reservation, asset.Name, "");
+        return MapToDto(reservation, asset.Name, user.Email ?? "");
     }
 
     public async Task<IEnumerable<ReservationResponseDto>> GetUserReservationsAsync(int userId)

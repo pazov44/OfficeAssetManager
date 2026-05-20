@@ -16,12 +16,12 @@ namespace OfficeAssetManager.Api.Controllers
         }
 
         [HttpPost("register")]
-
         public async Task<IActionResult> Register(RegisterDto registerDto)
         {
             var authResponse = await _authService.Register(registerDto);
 
-            if(authResponse.Success == false)
+            // Pattern Match: Check if the runtime subclass is a failure DTO
+            if (authResponse is AuthResponseFailDto)
             {
                 return BadRequest(authResponse);
             }
@@ -33,7 +33,7 @@ namespace OfficeAssetManager.Api.Controllers
         {
             var authResponse = await _authService.Login(loginDto);
 
-            if (authResponse.Success == false)
+            if (authResponse is AuthResponseFailDto)
             {
                 return BadRequest(authResponse);
             }
@@ -46,7 +46,7 @@ namespace OfficeAssetManager.Api.Controllers
         {
             var authResponse = await _authService.RefreshToken(tokenRequestDto);
 
-            if (authResponse.Success == false)
+            if (authResponse is AuthResponseFailDto)
             {
                 return BadRequest(authResponse);
             }

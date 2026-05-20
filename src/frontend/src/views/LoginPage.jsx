@@ -23,7 +23,6 @@ function LoginPage() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f5f5', fontFamily: 'sans-serif' }}>
       <form onSubmit={handleSubmit} style={{ background: 'white', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', width: '300px' }}>
-        <h2>Office Asset Manager</h2>
         <h3>Sign In</h3>
         
         {error && <p style={{ color: 'red', fontSize: '14px' }}>{error}</p>}

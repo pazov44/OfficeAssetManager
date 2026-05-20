@@ -6,6 +6,7 @@ using OfficeAssetManager.Core.ServiceContracts;
 using OfficeAssetManager.Core.Services;
 using FluentAssertions;
 using OfficeAssetManager.Core.Domain.RepositoryContracts;
+using Microsoft.AspNetCore.Identity;
 
 namespace OfficeAssetManager.Tests;
 
@@ -13,6 +14,7 @@ public class ReservationServiceUnitTests
 {
     private readonly Mock<IReservationRepository> _reservationRepoMock;
     private readonly Mock<IAssetRepository> _assetRepoMock;
+    private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
     private readonly IReservationService _reservationService;
 
     public ReservationServiceUnitTests()
@@ -20,10 +22,15 @@ public class ReservationServiceUnitTests
         _reservationRepoMock = new Mock<IReservationRepository>();
         _assetRepoMock = new Mock<IAssetRepository>();
 
-        // Inject both mocks into the service
+        var store = new Mock<IUserStore<ApplicationUser>>();
+        _userManagerMock = new Mock<UserManager<ApplicationUser>>(
+            store.Object, null!, null!, null!, null!, null!, null!, null!, null!
+        );
+
         _reservationService = new ReservationService(
             _reservationRepoMock.Object,
-            _assetRepoMock.Object
+            _assetRepoMock.Object,
+            _userManagerMock.Object
         );
     }
 
@@ -44,9 +51,32 @@ public class ReservationServiceUnitTests
     }
 
     [Fact]
+    public async Task CreateReservationAsync_ShouldThrowException_WhenUserNotFound()
+    {
+        // Arrange
+        var userId = 1;
+        var dto = new ReservationRequestDto { AssetId = 1 };
+
+        _assetRepoMock.Setup(repo => repo.GetByIdAsync(dto.AssetId))
+                      .ReturnsAsync(new Asset { Id = 1, Name = "Laptop" });
+
+        // Simulate user not found in UserManager
+        _userManagerMock.Setup(um => um.FindByIdAsync(userId.ToString()))
+                        .ReturnsAsync((ApplicationUser)null!);
+
+        // Act
+        Func<Task> action = async () => await _reservationService.CreateReservationAsync(userId, dto);
+
+        // Assert
+        await action.Should().ThrowAsync<Exception>()
+            .WithMessage("User not found.");
+    }
+
+    [Fact]
     public async Task CreateReservationAsync_ShouldThrowException_WhenDatesOverlap()
     {
         // Arrange
+        var userId = 1;
         var dto = new ReservationRequestDto
         {
             AssetId = 1,
@@ -57,12 +87,16 @@ public class ReservationServiceUnitTests
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(dto.AssetId))
                       .ReturnsAsync(new Asset { Id = 1, Name = "Laptop" });
 
+        // Setup User mock so it passes the user verification step
+        _userManagerMock.Setup(um => um.FindByIdAsync(userId.ToString()))
+                        .ReturnsAsync(new ApplicationUser { Id = userId, Email = "test@example.com" });
+
         // Simulate that an overlap already exists in the database
         _reservationRepoMock.Setup(repo => repo.HasOverlappingReservationAsync(dto.AssetId, dto.StartDate, dto.EndDate))
                             .ReturnsAsync(true);
 
         // Act
-        Func<Task> action = async () => await _reservationService.CreateReservationAsync(1, dto);
+        Func<Task> action = async () => await _reservationService.CreateReservationAsync(userId, dto);
 
         // Assert
         await action.Should().ThrowAsync<Exception>()
@@ -84,6 +118,10 @@ public class ReservationServiceUnitTests
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(dto.AssetId))
                       .ReturnsAsync(new Asset { Id = 1, Name = "Laptop" });
 
+        // Setup User mock to successfully return a test identity with an email address
+        _userManagerMock.Setup(um => um.FindByIdAsync(userId.ToString()))
+                        .ReturnsAsync(new ApplicationUser { Id = userId, Email = "test@example.com" });
+
         _reservationRepoMock.Setup(repo => repo.HasOverlappingReservationAsync(dto.AssetId, dto.StartDate, dto.EndDate))
                             .ReturnsAsync(false);
 
@@ -93,6 +131,7 @@ public class ReservationServiceUnitTests
         // Assert
         result.Should().NotBeNull();
         result.AssetName.Should().Be("Laptop");
+        result.UserEmail.Should().Be("test@example.com"); // Confirms mapping successfully reads user email!
         _reservationRepoMock.Verify(repo => repo.AddAsync(It.IsAny<Reservation>()), Times.Once);
         _reservationRepoMock.Verify(repo => repo.SaveChangesAsync(), Times.Once);
     }
