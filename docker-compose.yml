@@ -1,0 +1,29 @@
+services:
+  # ========================================================
+  # SERVICE 1: C# ASP.NET Core Web API
+  # ========================================================
+  backend-api:
+    build:
+      context: .                           
+      dockerfile: src/backend/Dockerfile   
+    ports:
+      - "YOUR_BACKEND_EXTERNAL_PORT:8080"                        
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_CONNECTION_STRING=Host=host.docker.internal;Port=5432;Database=OfficeAssetDb;Username=YOUR_LOCAL_DB_USERNAME;Password=YOUR_LOCAL_DB_PASSWORD;
+      - Jwt__Key=YOUR_DEVELOPMENT_SECRET_KEY_MIN_256_BITS_LONG_HERE
+      - Jwt__Issuer=YOUR_BACKEND_API_URL
+      - Jwt__Audience=YOUR_FRONTEND_UI_URL
+      - CorsSettings__AllowedOrigins__0=YOUR_FRONTEND_UI_URL
+
+  # ========================================================
+  # SERVICE 2: React (Vite) Frontend served by Nginx
+  # ========================================================
+  frontend-ui:
+    build:
+      context: ./src/frontend              
+      dockerfile: Dockerfile               
+    ports:
+      - "YOUR_FRONTEND_EXTERNAL_PORT:80"                          
+    environment:
+      - VITE_API_URL=YOUR_BACKEND_API_URL
